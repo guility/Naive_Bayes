@@ -24,12 +24,14 @@ def getCondProb(train_set, feature, feat_num, klass):
             incl = incl + 1
             if train_set[i][klass_num].strip() == klass:
                 incl_c = incl_c + 1
-    return abs(log(float(incl_c)/incl))
+    if (incl_c==0) or (incl==0):
+        return float(1000000)
+    else:
+        return abs(log(float(incl_c)/incl))
     
 def classify(instance, options, train_set):
     classes = options[len(options)-1]
     class_prob = []
-    res_class = None
     for klass in classes:
         feat_num = int(0)
         curr_prob = float(1)
@@ -38,22 +40,36 @@ def classify(instance, options, train_set):
             feat_num = feat_num + 1
         class_prob.append(curr_prob)
     curr_prob = class_prob[0]
-    for prob in class_prob:
+    res_class = classes[0]
+    for prob in range(len(class_prob)):
         if curr_prob > class_prob[prob]:
             curr_prob = class_prob[prob]
             res_class = classes[prob]
-    
-def trainModel(features, train_set):
-    NF = len(features)-1
-    prob_dct = {}
-    for instance in train_set:
-        if instance in prob_dct.keys():
-            prob_dct[instance] = prob_dct[instance] + 1
-        else:
-            prob_dct[instance] = int(1)
-    return prob_dct
-        
-    
+    return res_class
+
+def classifySet(test_set, train_set, options):
+    classes = []
+    for inst in test_set:
+        instance = inst[0:-1]
+        classes.append(classify(instance, options, train_set))
+    return classes
+
+def getRealClasses(test_set):
+    classes = []
+    klass = len(test_set[0])-1
+    for i in range(len(test_set)):
+        classes.append(test_set[i][klass])
+    return classes
+
+def evaluate(real_classes, prog_classes):
+    matching = int(0)
+    for i in range(len(real_classes)):
+        if real_classes[i].strip()==prog_classes[i]:
+            matching = matching + 1
+    accuracy = round(100*float(matching)/len(real_classes))
+    return accuracy
+
+
 def scanInfo(filepath):
     file = open(filepath)
     features = []
@@ -66,7 +82,10 @@ def scanInfo(filepath):
         line = line.replace('\t\t',' ')
         line = line.replace('\t',' ')
         if datamet==1:
-            data.append(line.split(','))
+            lst = line.split(',')
+            for i in range(len(lst)):
+                lst[i]=lst[i].strip()
+            data.append(lst)
         else:
             if line.startswith('@attribute'):
                 options = line[line.find('{')+1:line.find('}')]
@@ -76,6 +95,7 @@ def scanInfo(filepath):
     if data[-3]==['%']:
         data=data[0:-3]
     return data, features, feat_opt
+
 
 def genNumRand(number, ch_range):
     lst = []
@@ -108,10 +128,17 @@ def splitData(data):
     return train_set, test_set, missing_data
 
 
+def runScript():
+    sel = input('Введите 1 - для GOLF, 2 - для Soybean: ')
+    print('\n')
+    source_files=['weather_nom.txt', 'soybean.txt']
+    data, features, options = scanInfo(dataset_files[1])
+    train_set, test_set, missing_data = splitData(data)
+    prog_classes = classifySet(test_set, train_set, options)
+    real_classes = getRealClasses(test_set)
+    return prog_classes, evaluate(real_classes, prog_classes)
 
-def soybean(source_file):
-    data, features, options = scanInfo(source_file)
-    train_set, test_set = splitData(data)
-    return 0
 
 
+
+runScript()
