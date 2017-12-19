@@ -38,12 +38,10 @@ def classify(instance, options, train_set):
         feat_num = int(0)
         curr_prob = float(1)
         for feat in instance:
-            print(feat, feat_num, klass)
             cond_prob = getCondProb(train_set, feat, feat_num, klass)
             curr_prob = curr_prob*cond_prob
             feat_num = feat_num + 1
         class_prob.append(curr_prob)
-    print(*class_prob)
     
     
     curr_prob = class_prob[0]
