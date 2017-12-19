@@ -1,12 +1,12 @@
 from __future__ import division
 from collections import defaultdict
 from math import log
+import numpy as np
 
 import random
 random.seed()
 
 
-dataset_files = ['weather_nom.txt', 'soybean.txt']
 
 def checkCond(set_a, set_b):
     check = 1
@@ -24,8 +24,10 @@ def getCondProb(train_set, feature, feat_num, klass):
             incl = incl + 1
             if train_set[i][klass_num].strip() == klass:
                 incl_c = incl_c + 1
-    if (incl_c==0) or (incl==0):
-        return float(1000000)
+    if (incl==0):
+        return float(1)
+    elif (incl_c==0):
+        return np.inf
     else:
         return abs(log(float(incl_c)/incl))
     
@@ -36,9 +38,14 @@ def classify(instance, options, train_set):
         feat_num = int(0)
         curr_prob = float(1)
         for feat in instance:
-            curr_prob = curr_prob*getCondProb(train_set, feat, feat_num, klass)
+            print(feat, feat_num, klass)
+            cond_prob = getCondProb(train_set, feat, feat_num, klass)
+            curr_prob = curr_prob*cond_prob
             feat_num = feat_num + 1
         class_prob.append(curr_prob)
+    print(*class_prob)
+    
+    
     curr_prob = class_prob[0]
     res_class = classes[0]
     for prob in range(len(class_prob)):
@@ -129,10 +136,10 @@ def splitData(data):
 
 
 def runScript():
-    sel = input('Введите 1 - для GOLF, 2 - для Soybean: ')
+    print('I would ask you to rename datasets as weather_nom.txt for GOLD and soybean.txt for Soybean.\nAnd place it into the script folder.')
+    filename = input('Введите путь к файлу с данными: ')
     print('\n')
-    source_files=['weather_nom.txt', 'soybean.txt']
-    data, features, options = scanInfo(dataset_files[1])
+    data, features, options = scanInfo(filename)
     train_set, test_set, missing_data = splitData(data)
     prog_classes = classifySet(test_set, train_set, options)
     real_classes = getRealClasses(test_set)
